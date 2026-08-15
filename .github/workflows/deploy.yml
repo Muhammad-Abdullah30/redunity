@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+      - master
+    paths:
+      - 'redunity_recover/redunity.org/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 jobs:
@@ -13,6 +17,33 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate deploy secrets
+        shell: bash
+        run: |
+          for secret in HOSTINGER_FTP_SERVER HOSTINGER_FTP_USERNAME HOSTINGER_FTP_PASSWORD HOSTINGER_FTP_PORT HOSTINGER_FTP_REMOTE_DIR; do
+            if [ -z "${!secret}" ]; then
+              echo "Missing required GitHub secret: $secret"
+              exit 1
+            fi
+          done
+        env:
+          HOSTINGER_FTP_SERVER: ${{ secrets.HOSTINGER_FTP_SERVER }}
+          HOSTINGER_FTP_USERNAME: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          HOSTINGER_FTP_PASSWORD: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          HOSTINGER_FTP_PORT: ${{ secrets.HOSTINGER_FTP_PORT }}
+          HOSTINGER_FTP_REMOTE_DIR: ${{ secrets.HOSTINGER_FTP_REMOTE_DIR }}
+
+      - name: Verify deployment source exists
+        shell: bash
+        run: |
+          if [ ! -d "redunity_recover/redunity.org" ]; then
+            echo "Deployment source directory does not exist: redunity_recover/redunity.org"
+            exit 1
+          fi
+          echo "Using static site directory: redunity_recover/redunity.org"
 
       - name: Deploy site files to Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -21,7 +52,7 @@ jobs:
           username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
           port: ${{ secrets.HOSTINGER_FTP_PORT }}
-          local-dir: redunity_recover/redunity.org/
+          local-dir: ./redunity_recover/redunity.org/
           server-dir: ${{ secrets.HOSTINGER_FTP_REMOTE_DIR }}
           protocol: ftps
           dangerous-clean-slate: false

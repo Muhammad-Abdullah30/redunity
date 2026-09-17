@@ -1,0 +1,9 @@
+/* App wide custom helper utility styles */
+.brand-gradient {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+}
+
+.brand-gradient-subtle {
+  background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%);
+}
+
